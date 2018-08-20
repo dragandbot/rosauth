@@ -6,6 +6,10 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   srv/Authentication.srv
   DEPENDENCIES builtin_interfaces
