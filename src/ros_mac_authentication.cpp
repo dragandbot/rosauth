@@ -25,7 +25,7 @@ using namespace std;
  * The ROS parameter name for the file that contains the secret string. We do not store the actual
  * string in the parameter server as the parameter server itself may not be secure.
  */
-#define SECRET_FILE_PARAM "/ros_mac_authentication/secret_file_location"
+#define SECRET_FILE_PARAM "secret_file_location"
 
 /*!
  * \def MISSING_PARAMETER
@@ -77,8 +77,10 @@ public:
     bool time_check = diff.nanoseconds() < 5000000000 && rclcpp::Time(req->end) > t;
 
     // check if we pass the time requirement
+    RCLCPP_INFO(get_logger(), "time_check");
     if (time_check)
     {
+      RCLCPP_INFO(get_logger(), "time_check PASSED");
       // create the string to hash
       stringstream ss;
       ss << secret << req->client << req->dest << req->rand << req->t.sec << req->level << req->end.sec;

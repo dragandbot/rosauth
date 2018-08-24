@@ -31,10 +31,33 @@ install(TARGETS ros_mac_authentication
 )
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   ## Add gtest based cpp test target and link libraries
-  # TODO reenable rostests
-  # add_executable(ros_mac_authentication_test test/ros_mac_authentication_test.cpp)
-  # add_dependencies(ros_mac_authentication_test ${PROJECT_NAME}_gencpp)
-  # target_link_libraries(ros_mac_authentication_test ${catkin_LIBRARIES} ${GTEST_LIBRARIES} crypto dl pthread)
-  # add_rostest(test/ros_mac_authentication.test)
+  ament_add_gtest_executable(ros_mac_authentication_test test/ros_mac_authentication_test.cpp)
+  rosidl_target_interfaces(ros_mac_authentication_test
+    ${PROJECT_NAME} "rosidl_typesupport_cpp")
+  ament_target_dependencies(ros_mac_authentication_test builtin_interfaces rclcpp)
+  target_link_libraries(ros_mac_authentication_test crypto dl pthread)
+
+  # TODO replace parameter file with just passing the parameter once that is supported
+  set(PARAMETERS_YAML_FILE "${CMAKE_CURRENT_BINARY_DIR}/secret.yaml")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/secret.yaml.in"
+    "${PARAMETERS_YAML_FILE}"
+    @ONLY)
+
+  set(ROS_MAC_AUTHENTICATION_EXECUTABLE $<TARGET_FILE:ros_mac_authentication>)
+  set(ROS_MAC_AUTHENTICATION_TEST_EXECUTABLE $<TARGET_FILE:ros_mac_authentication_test>)
+  set(generated_test_file "${CMAKE_CURRENT_BINARY_DIR}/ros_mac_authentication_test")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/ros_mac_authentication_test.py.in"
+    "${generated_test_file}.py.genexp"
+    @ONLY)
+  file(GENERATE
+    OUTPUT "${generated_test_file}_$<CONFIG>.py"
+    INPUT "${generated_test_file}.py.genexp"
+  )
+  ament_add_test(tests
+    COMMAND "${generated_test_file}_$<CONFIG>.py"
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO)
 endif()
