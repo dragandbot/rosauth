@@ -57,39 +57,23 @@ string secret;
 
 bool authenticate(rosauth::Authentication::Request &req, rosauth::Authentication::Response &res)
 {
-  // keep track of the current time
-  Time t = Time::now();
-  // clocks can be out of sync, check which comes later
-  Duration *diff;
-  if (req.t > t)
-    diff = new Duration(req.t - t);
-  else
-    diff = new Duration(t - req.t);
-  bool time_check = diff->sec < 5 && req.end > t;
-  delete diff;
 
-  // check if we pass the time requirement
-  if (time_check)
-  {
-    // create the string to hash
-    stringstream ss;
-    ss << secret << req.client << req.dest << req.rand << req.t.sec << req.level << req.end.sec;
-    string local_hash = ss.str();
+  // create the string to hash
+  stringstream ss;
+  ss << secret << req.rand;
+  string local_hash = ss.str();
 
-    // check the request
-    unsigned char sha512_hash[SHA512_DIGEST_LENGTH];
-    SHA512((unsigned char *)local_hash.c_str(), local_hash.length(), sha512_hash);
+  // check the request
+  unsigned char sha512_hash[SHA512_DIGEST_LENGTH];
+  SHA512((unsigned char *)local_hash.c_str(), local_hash.length(), sha512_hash);
 
-    // convert to a hex string to compare
-    char hex[SHA512_DIGEST_LENGTH * 2];
-    for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
-      sprintf(&hex[i * 2], "%02x", sha512_hash[i]);
+  // convert to a hex string to compare
+  char hex[SHA512_DIGEST_LENGTH * 2];
+  for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
+    sprintf(&hex[i * 2], "%02x", sha512_hash[i]);
 
-    // an authenticated user must match the MAC string
-    res.authenticated = (strcmp(hex, req.mac.c_str()) == 0);
-  }
-  else
-    res.authenticated = false;
+  // an authenticated user must match the MAC string
+  res.authenticated = (strcmp(hex, req.mac.c_str()) == 0);
 
   return true;
 }
